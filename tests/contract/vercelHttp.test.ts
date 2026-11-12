@@ -117,6 +117,21 @@ describe('Vercel Serverless HTTP Endpoint Contract Tests', () => {
     expect(parsed.mode).toBe('serverless');
   });
 
+  it('GET / responds with 200 and server info without requiring Bearer auth', async () => {
+    const res = await makeRequest('GET', '/', { Accept: 'application/json' });
+    expect(res.status).toBe(200);
+    const parsed = JSON.parse(res.body);
+    expect(parsed.status).toBe('ok');
+    expect(parsed.endpoints.mcp).toBe('/api/mcp');
+  });
+
+  it('GET / responds with 200 and HTML when Accept header includes text/html', async () => {
+    const res = await makeRequest('GET', '/', { Accept: 'text/html,application/xhtml+xml' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.body).toContain('Gmail & Google Docs MCP Server');
+  });
+
   it('POST /api/mcp rejects unauthenticated requests with 401', async () => {
     const res = await makeRequest('POST', '/api/mcp', {}, JSON.stringify({ jsonrpc: '2.0', id: 1 }));
     expect(res.status).toBe(401);
