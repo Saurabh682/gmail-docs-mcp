@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { loadConfig, type Config } from '../config/config.js';
 import { createTokenStore } from '../auth/TokenStore.js';
@@ -27,6 +28,28 @@ export interface CreateAppOptions {
   config?: Config;
   gmailPort?: GmailPort;
   docsPort?: DocsPort;
+}
+
+function resolveIndexHtml(): string | null {
+  try {
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const candidates = [
+      path.join(process.cwd(), 'index.html'),
+      path.join(process.cwd(), 'api', 'index.html'),
+      path.join(currentDir, 'index.html'),
+      path.join(currentDir, '..', 'index.html'),
+      path.join(currentDir, '..', '..', 'index.html'),
+      path.join(currentDir, '..', '..', 'api', 'index.html'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        return fs.readFileSync(p, 'utf-8');
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
 export async function createHttpApp(options: CreateAppOptions = {}): Promise<AppContext> {
@@ -64,11 +87,17 @@ export async function createHttpApp(options: CreateAppOptions = {}): Promise<App
     // 2. Root landing page & interactive playground (Public)
     if (url.pathname === '/' || url.pathname === '/index.html') {
       const acceptsHtml = req.headers.accept?.includes('text/html');
-      const indexPath = path.join(process.cwd(), 'index.html');
-      if (acceptsHtml && fs.existsSync(indexPath)) {
-        const html = fs.readFileSync(indexPath, 'utf-8');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(html);
+      const html = resolveIndexHtml();
+
+      if (acceptsHtml) {
+        if (html) {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(html);
+          return;
+        }
+        // Fallback: Redirect browser to the Hugging Face interactive playground
+        res.writeHead(302, { Location: 'https://deamonizer-gmail-docs-mcp-backend.static.hf.space' });
+        res.end();
         return;
       }
 
