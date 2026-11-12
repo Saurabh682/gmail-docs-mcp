@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail & Google Docs MCP Server — Backend Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #0b111e;
+      --bg-sidebar: #0d1320;
+      --surface-card: rgba(22, 34, 56, 0.85);
+      --surface-hover: rgba(27, 42, 71, 0.95);
+      --border-subtle: rgba(42, 61, 93, 0.45);
+      --border-accent: rgba(56, 189, 248, 0.3);
+      --blue-primary: #38bdf8;
+      --blue-tint: rgba(56, 189, 248, 0.12);
+      --green-success: #10b981;
+      --green-tint: rgba(16, 185, 129, 0.12);
+      --amber-warn: #f59e0b;
+      --coral-critical: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-code: #e2e8f0;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Space Grotesk', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 32px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-ring {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: var(--blue-tint);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .links-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border-subtle);
+      background: rgba(30, 41, 59, 0.6);
+      color: var(--text-main);
+    }
+    .btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--blue-primary);
+    }
+    .btn-primary {
+      background: var(--blue-primary);
+      color: #0b111e;
+      border-color: var(--blue-primary);
+    }
+    .btn-primary:hover {
+      background: #7dd3fc;
+      color: #0b111e;
+    }
+    .status-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green-success);
+      box-shadow: 0 0 10px var(--green-success);
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--blue-primary);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input, textarea, select {
+      width: 100%;
+      background: rgba(11, 17, 30, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue-primary);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+    .toggle-row input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+    .terminal {
+      background: #050811;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-code);
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    td code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--blue-primary);
+      background: rgba(56, 189, 248, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .badge-ok {
+      color: var(--green-success);
+      font-weight: 600;
+    }
+    .badge-amber {
+      color: var(--amber-warn);
+      font-weight: 600;
+    }
+    pre {
+      background: #050811;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      overflow-x: auto;
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo-ring">📬</div>
+        <div>
+          <h1>Gmail & Google Docs MCP Server</h1>
+          <div class="tagline">Production Model Context Protocol Hub • Vercel Serverless & Local Stdio</div>
+        </div>
+      </div>
+      <div class="links-bar">
+        <a class="btn" href="https://github.com/Saurabh682/gmail-docs-mcp" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub Repo
+        </a>
+        <a class="btn" href="https://gmail-docs-mcp-five.vercel.app/api/health" target="_blank">
+          🌐 Vercel Health
+        </a>
+        <a class="btn btn-primary" href="#playground">
+          ⚡ Interactive Playground
+        </a>
+      </div>
+    </header>
+
+    <div class="status-strip">
+      <div class="status-indicator">
+        <div class="pulse-dot" id="liveDot"></div>
+        <span id="liveStatusText">Verifying Backend Deployment...</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge-pill">MCP v1.6.0</span>
+        <span class="badge-pill">Node.js 20+</span>
+        <span class="badge-pill">Streamable HTTP / SSE</span>
+        <span class="badge-pill">Least-Privilege Scopes</span>
+      </div>
+    </div>
+
+    <div class="grid-2" id="playground">
+      <!-- Left Column: Controls & Actions -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚡</span>
+          <span>Live MCP Tool Invoker</span>
+        </div>
+
+        <div class="form-group">
+          <label>Vercel Backend URL</label>
+          <input type="text" id="targetUrl" value="https://gmail-docs-mcp-five.vercel.app/api/mcp">
+        </div>
+
+        <div class="form-group">
+          <label>Server API Key (Bearer Auth)</label>
+          <input type="password" id="serverApiKey" value="0f3780ce835e5a48f746104f6be69f6e57d373c79490e340">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <button class="btn btn-primary" id="btnInit" style="flex: 1;">Handshake (Initialize)</button>
+          <button class="btn" id="btnHealth">Check Health</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin-bottom: 20px;">
+
+        <div class="form-group">
+          <label>Select Tool Action</label>
+          <select id="toolSelect">
+            <option value="send_email">send_email (Gmail API)</option>
+            <option value="append_to_doc">append_to_doc (Google Docs API)</option>
+          </select>
+        </div>
+
+        <!-- send_email fields -->
+        <div id="emailFields">
+          <div class="form-group">
+            <label>Recipient (To)</label>
+            <input type="email" id="emailTo" value="saurabh.682@gmail.com">
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <input type="text" id="emailSubject" value="Executive Note: Review Pulse Sync">
+          </div>
+          <div class="form-group">
+            <label>Body (Text or Markdown)</label>
+            <textarea id="emailBody">Automated report from the Hugging Face MCP Hub playground.</textarea>
+          </div>
+        </div>
+
+        <!-- append_to_doc fields -->
+        <div id="docFields" style="display: none;">
+          <div class="form-group">
+            <label>Google Doc ID or URL</label>
+            <input type="text" id="docId" value="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+          </div>
+          <div class="form-group">
+            <label>Content to Append</label>
+            <textarea id="docContent">### Weekly Pulse Findings\n- Stability: 99.98%\n- Active Users: Up 14%</textarea>
+          </div>
+        </div>
+
+        <label class="toggle-row">
+          <input type="checkbox" id="dryRunToggle" checked>
+          <span>Enforce Dry Run Safety Gate (<code>dry_run: true</code>)</span>
+        </label>
+
+        <button class="btn btn-primary" id="btnExecuteTool" style="width: 100%; justify-content: center;">
+          🚀 Execute Tool Request
+        </button>
+      </div>
+
+      <!-- Right Column: Live Output Terminal -->
+      <div class="card" style="display: flex; flex-direction: column;">
+        <div class="card-title">
+          <span>🖥️</span>
+          <span>Protocol Stream & Execution Log</span>
+        </div>
+        <div class="terminal-header">
+          <span id="responseStatus">Status: Idle</span>
+          <span id="latencyTimer">0 ms</span>
+        </div>
+        <div class="terminal" id="terminalLog" style="flex: 1;">Ready. Click 'Handshake' or 'Execute Tool Request' to test the live Vercel backend.</div>
+      </div>
+    </div>
+
+    <!-- Section: Safety Invariant Matrix -->
+    <div class="card" style="margin-bottom: 28px;">
+      <div class="card-title">
+        <span>🛡️</span>
+        <span>Security & Policy Invariants</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Policy Rule</th>
+            <th>Enforcement Mechanism</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>INV-01</code></td>
+            <td>Zero Credential Leakage</td>
+            <td>Tokens and refresh secrets strictly scrubbed from stderr JSON logs and tool outputs.</td>
+            <td><span class="badge-ok">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><code>INV-02</code></td>
+            <td>Recipient Allowlist Guard</td>
+            <td>Emails only routable to pre-approved domains or accounts. Blocks open relay attacks.</td>
+            <td><span class="badge-ok">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><code>INV-03</code></td>
+            <td>Sliding Window Rate Limiter</td>
+            <td>Max 10 sends/minute and 50 sends/day backed by Redis sliding window ledger.</td>
+            <td><span class="badge-ok">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><code>INV-04</code></td>
+            <td>CR/LF Header Injection Filter</td>
+            <td>Strict validation rejects subjects containing newline / carrier return characters.</td>
+            <td><span class="badge-ok">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><code>INV-05</code></td>
+            <td>Atomic UTF-16 Code Unit Math</td>
+            <td>Accurate index planning for astral symbols, emoji, and Devanagari text in Google Docs.</td>
+            <td><span class="badge-ok">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><code>INV-06</code></td>
+            <td>Dry-Run Default Gate</td>
+            <td>Default mode safely plans and validates requests without executing live writes.</td>
+            <td><span class="badge-amber">ENFORCED</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section: Client Configuration -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔌</span>
+        <span>Connect to Antigravity / Claude / Cursor</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">
+        Add this serverless configuration snippet to your agent's MCP settings:
+      </p>
+      <pre><code>{
+  "mcpServers": {
+    "gmail-docs-mcp": {
+      "url": "https://gmail-docs-mcp-five.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer 0f3780ce835e5a48f746104f6be69f6e57d373c79490e340"
+      }
+    }
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <script>
+    const targetUrlInput = document.getElementById('targetUrl');
+    const apiKeyInput = document.getElementById('serverApiKey');
+    const liveStatusText = document.getElementById('liveStatusText');
+    const liveDot = document.getElementById('liveDot');
+    const terminalLog = document.getElementById('terminalLog');
+    const responseStatus = document.getElementById('responseStatus');
+    const latencyTimer = document.getElementById('latencyTimer');
+    const toolSelect = document.getElementById('toolSelect');
+    const emailFields = document.getElementById('emailFields');
+    const docFields = document.getElementById('docFields');
+
+    toolSelect.addEventListener('change', () => {
+      if (toolSelect.value === 'send_email') {
+        emailFields.style.display = 'block';
+        docFields.style.display = 'none';
+      } else {
+        emailFields.style.display = 'none';
+        docFields.style.display = 'block';
+      }
+    });
+
+    async function checkHealth() {
+      const t0 = performance.now();
+      try {
+        const res = await fetch('https://gmail-docs-mcp-five.vercel.app/api/health');
+        const data = await res.json();
+        const duration = Math.round(performance.now() - t0);
+        if (res.ok && data.status === 'ok') {
+          liveStatusText.textContent = `Vercel Backend Online (${duration}ms) • ${data.server} v${data.version}`;
+          liveDot.style.background = '#10b981';
+          liveDot.style.boxShadow = '0 0 10px #10b981';
+          return true;
+        }
+      } catch (e) {
+        liveStatusText.textContent = 'Backend Offline or Unreachable';
+        liveDot.style.background = '#f43f5e';
+        liveDot.style.boxShadow = '0 0 10px #f43f5e';
+      }
+      return false;
+    }
+
+    document.getElementById('btnHealth').addEventListener('click', async () => {
+      terminalLog.textContent = 'Checking health at /api/health...';
+      const ok = await checkHealth();
+      terminalLog.textContent = ok ? 'GET /api/health returned 200 OK\n\n' + liveStatusText.textContent : 'Health check failed.';
+    });
+
+    document.getElementById('btnInit').addEventListener('click', async () => {
+      const t0 = performance.now();
+      responseStatus.textContent = 'Status: Initializing...';
+      terminalLog.textContent = 'Sending JSON-RPC "initialize" over Streamable HTTP...';
+
+      const payload = {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          clientInfo: { name: 'huggingface-hub', version: '1.0.0' }
+        }
+      };
+
+      try {
+        const res = await fetch(targetUrlInput.value, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKeyInput.value.trim(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const ms = Math.round(performance.now() - t0);
+        latencyTimer.textContent = `${ms} ms`;
+        responseStatus.textContent = `Status: ${res.status} ${res.statusText}`;
+
+        const text = await res.text();
+        terminalLog.textContent = `HTTP/${res.status} ${res.statusText} (${ms}ms)\nContent-Type: ${res.headers.get('content-type')}\n\n` + text;
+      } catch (err) {
+        responseStatus.textContent = 'Status: Network Error';
+        terminalLog.textContent = 'Failed to execute request:\n' + err.message;
+      }
+    });
+
+    document.getElementById('btnExecuteTool').addEventListener('click', async () => {
+      const t0 = performance.now();
+      const tool = toolSelect.value;
+      const isDryRun = document.getElementById('dryRunToggle').checked;
+      responseStatus.textContent = `Status: Calling ${tool}...`;
+      terminalLog.textContent = `Dispatching tools/call for ${tool} (dry_run: ${isDryRun})...`;
+
+      let args = {};
+      if (tool === 'send_email') {
+        args = {
+          to: [document.getElementById('emailTo').value.trim()],
+          subject: document.getElementById('emailSubject').value.trim(),
+          body: document.getElementById('emailBody').value.trim(),
+          dry_run: isDryRun
+        };
+      } else {
+        args = {
+          doc_id: document.getElementById('docId').value.trim(),
+          text: document.getElementById('docContent').value.trim(),
+          dry_run: isDryRun
+        };
+      }
+
+      const payload = {
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method: 'tools/call',
+        params: {
+          name: tool,
+          arguments: args
+        }
+      };
+
+      try {
+        const res = await fetch(targetUrlInput.value, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKeyInput.value.trim(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const ms = Math.round(performance.now() - t0);
+        latencyTimer.textContent = `${ms} ms`;
+        responseStatus.textContent = `Status: ${res.status} ${res.statusText}`;
+
+        const text = await res.text();
+        terminalLog.textContent = `HTTP/${res.status} ${res.statusText} (${ms}ms)\n\n` + text;
+      } catch (err) {
+        responseStatus.textContent = 'Status: Execution Error';
+        terminalLog.textContent = 'Failed to execute tool call:\n' + err.message;
+      }
+    });
+
+    // Auto-check on load
+    checkHealth();
+  </script>
+</body>
+</html>

@@ -1,9 +1,27 @@
-# Gmail + Google Docs MCP Server (Antigravity Stdio)
+---
+title: Gmail Docs MCP Server Backend
+emoji: 📬
+colorFrom: blue
+colorTo: indigo
+sdk: static
+short_description: Model Context Protocol backend hub for Gmail & Google Docs
+---
 
-A secure **Model Context Protocol (MCP)** server built for **Antigravity** that exposes two Google tools to AI agents:
+# Gmail + Google Docs MCP Server (Vercel Serverless & Local Stdio)
+
+A production-grade **Model Context Protocol (MCP)** server built for **Antigravity**, **Claude Desktop**, and **Cursor** that exposes Google tools to AI agents:
 
 1. **`send_email`**: Send plain-text or HTML emails via Gmail API with strict safety guardrails (recipient allowlists, rate limiting, header-injection protection, dry-run mode, and a master live-send switch).
 2. **`append_to_doc`**: Append structured content to the end of an existing Google Doc atomically via the Google Docs API with heading styling, separators, and revision conflict retries.
+
+---
+
+## 🔗 Live Deployments & Endpoints
+
+- **Live MCP Endpoint (Vercel)**: `https://gmail-docs-mcp-five.vercel.app/api/mcp`
+- **Health Check**: [https://gmail-docs-mcp-five.vercel.app/api/health](https://gmail-docs-mcp-five.vercel.app/api/health)
+- **Hugging Face Backend Hub & Playground**: [https://huggingface.co/spaces/deamonizer/gmail-docs-mcp-backend](https://huggingface.co/spaces/deamonizer/gmail-docs-mcp-backend)
+- **Source Code (GitHub)**: [https://github.com/Saurabh682/gmail-docs-mcp](https://github.com/Saurabh682/gmail-docs-mcp)
 
 ---
 
