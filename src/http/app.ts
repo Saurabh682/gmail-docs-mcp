@@ -16,7 +16,6 @@ import type { DocsPort } from '../ports/DocsPort.js';
 
 export interface AppContext {
   config: Config;
-  transport: StreamableHTTPServerTransport;
   emailService: EmailService;
   docService: DocService;
   handleNodeRequest: (req: IncomingMessage, res: ServerResponse) => Promise<void>;
@@ -42,15 +41,6 @@ export async function createHttpApp(options: CreateAppOptions = {}): Promise<App
 
   const emailService = new EmailService(policyEngine, gmailAdapter, authManager, auditLog);
   const docService = new DocService(policyEngine, docsAdapter, authManager, auditLog);
-
-  const server = createServer({ emailService, docService });
-
-  // Stateless Streamable HTTP transport ideal for Vercel / Serverless
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-
-  await server.connect(transport);
 
   const handleNodeRequest = async (req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -97,13 +87,19 @@ export async function createHttpApp(options: CreateAppOptions = {}): Promise<App
       req.headers.accept = currentAccept ? `${currentAccept}, text/event-stream` : 'application/json, text/event-stream';
     }
 
-    // 4. Delegate to MCP Streamable HTTP Transport
+    // 4. In stateless Streamable HTTP mode, create a fresh transport and server per request
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    const server = createServer({ emailService, docService });
+    await server.connect(transport);
+
+    // 5. Delegate to MCP Streamable HTTP Transport
     await transport.handleRequest(req, res);
   };
 
   return {
     config,
-    transport,
     emailService,
     docService,
     handleNodeRequest,
